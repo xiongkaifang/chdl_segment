@@ -1,0 +1,554 @@
+/** ============================================================================
+*
+*  Copyright (C), 1987 - 2015, xiong-kaifang Tech. Co.,, Ltd.
+*
+*  @File name:	chdl.c
+*
+*  @Author: xiong-kaifang   Version: v1.0   Date: 2016-01-08
+*
+*  @Description:   The description of this file.
+*
+*                  The template format for source file.
+*
+*  @Version:       v1.0
+*
+*  @Function List: // 主要函数及功能
+*      1.  －－－－－
+*      2.  －－－－－
+*
+*  @History:       // 历史修改记录
+*
+*  <author>        <time>       <version>      <description>
+*
+*  xiong-kaifang   2016-01-08     v1.0	        Write this module.
+*
+*
+*  ============================================================================
+*/
+
+/*  --------------------- Include system headers ---------------------------- */
+#include <stdlib.h>
+
+/*  --------------------- Include user headers   ---------------------------- */
+#include "stdafx.h"
+
+#include "chdl.h"
+#include "dlist.h"
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+	#pragma pack(push,4) 
+	/*
+	*  --------------------- Macro definition -------------------------------------
+	*/
+
+	/** ============================================================================
+	*  @Macro:         Macro name
+	*
+	*  @Description:   Description of this macro.
+	*  ============================================================================
+	*/
+
+	/*
+	*  --------------------- Structure definition ---------------------------------
+	*/
+
+	/** ----------------------------------------------------------------------------
+	*  @Name:          Structure name
+	*
+	*  @Description:   Description of the structure.
+	*
+	*  @Field:         Field1 member
+	*
+	*  @Field          Field2 member
+	*  ----------------------------------------------------------------------------
+	*/
+	struct __stock_candlesticks_t; typedef struct __stock_candlesticks_t stock_candlesticks_t;
+	struct __stock_candlesticks_t
+	{
+		void    * m_reserved[2];
+		unsigned int m_id;
+		float    m_open;
+		float    m_close;
+		float    m_high;
+		float    m_low;
+	};
+
+	enum __stock_indicator_type_t; typedef enum __stock_indicator_type_t stock_indicator_type_t;
+	enum __stock_indicator_type_t
+	{
+		STOCK_INDICATOR_TYPE_TREND = 0,
+		STOCK_INDICATOR_TYPE_MOMENTUM = 1,
+		STOCK_INDICATOR_TYPE_VOLUME = 2,
+		STOCK_INDICATOR_TYPE_VOLATILITY = 3,
+		STOCK_INDICATOR_TYPE_BREADTH = 4,
+		STOCK_INDICATOR_TYPE_SPT_RST = 5, /* Support & resistence */
+		STOCK_INDICATOR_TYPE_OTHER = 10
+	};
+
+	struct __stock_macd_indicator_t; typedef struct __stock_macd_indicator_t stock_macd_indicator_t;
+	struct __stock_macd_indicator_t
+	{
+		stock_indicator_type_t
+			m_type;
+		float    m_diff;
+		float    m_dea;
+		float    m_macd;
+	};
+
+	enum __stock_movement_type_t; typedef enum __stock_movement_type_t stock_movement_type_t;
+	enum __stock_movement_type_t
+	{
+		STOCK_MOVEMENT_TYPE_TENDENCY = 0,
+		STOCK_MOVEMENT_TYPE_CONSOLIDATION = 1
+	};
+
+	enum __stock_tendency_type_t; typedef enum __stock_tendency_type_t stock_tendency_type_t;
+	enum __stock_tendency_type_t
+	{
+		STOCK_TRENDENCY_TYPE_ADVANCING = 0,
+		STOCK_TRENDENCY_TYPE_DECLINE = 1
+	};
+
+	enum __stock_chart_period_type_t; typedef enum __stock_chart_period_type_t stock_chart_period_type_t;
+	enum __stock_chart_period_type_t
+	{
+		STOCK_CHART_PERIOD_TYPE_MIN01 = 0,
+		STOCK_CHART_PERIOD_TYPE_MIN05 = 1,
+		STOCK_CHART_PERIOD_TYPE_MIN15 = 2,
+		STOCK_CHART_PERIOD_TYPE_MIN30 = 3,
+		STOCK_CHART_PERIOD_TYPE_MIN60 = 4,
+		STOCK_CHART_PERIOD_TYPE_DAY = 5,
+		STOCK_CHART_PERIOD_TYPE_WEEK = 6,
+		STOCK_CHART_PERIOD_TYPE_MONTH = 7,
+		STOCK_CHART_PERIOD_TYPE_YEAR = 8
+	};
+
+	enum __stock_trend_level_type_t; typedef enum __stock_trend_level_type_t stock_trend_level_type_t;
+	enum __stock_trend_level_type_t
+	{
+		STOCK_TREND_LEVEL_TYPE_MIN01 = 0,
+		STOCK_TREND_LEVEL_TYPE_MIN05 = 1,
+		STOCK_TREND_LEVEL_TYPE_MIN15 = 2,
+		STOCK_TREND_LEVEL_TYPE_MIN30 = 3,
+		STOCK_TREND_LEVEL_TYPE_MIN60 = 4,
+		STOCK_TREND_LEVEL_TYPE_DAY = 5,
+		STOCK_TREND_LEVEL_TYPE_WEEK = 6,
+		STOCK_TREND_LEVEL_TYPE_MONTH = 7,
+		STOCK_TREND_LEVEL_TYPE_YEAR = 8
+	};
+
+	enum __stock_candlesticks_node_type_t; typedef enum __stock_candlesticks_node_type_t stock_candlesticks_node_type_t;
+	enum __stock_candlesticks_node_type_t
+	{
+		STOCK_CANDLESTICKS_NODE_TYPE_ELEMENT = 1 < 0,
+		STOCK_CANDLESTICKS_NODE_TYPE_SUBSECTION = 1 < 1,  /* Yi Bi */
+		STOCK_CANDLESTICKS_NODE_TYPE_SECTION = 1 < 2,  /* Yi Duan */
+		STOCK_CANDLESTICKS_NODE_TYPE_PIVOT = 1 < 3,
+		STOCK_CANDLESTICKS_NODE_TYPE_TREND_ADV = 1 < 4,
+		STOCK_CANDLESTICKS_NODE_TYPE_TREND_DEC = 1 < 5
+	};
+
+	struct __stock_candlesticks_node_t; typedef struct __stock_candlesticks_node_t stock_candlesticks_node_t;
+	struct __stock_candlesticks_node_t
+	{
+		void *                  reserved[2];
+
+		stock_candlesticks_t    m_candlestick;
+		stock_macd_indicator_t  m_indicator;
+	};
+
+	struct __stock_section_t; typedef struct __stock_section_t stock_section_t;
+	struct __stock_section_t
+	{
+		unsigned int           m_id;
+		stock_candlesticks_t * m_start;
+		stock_candlesticks_t * m_end;
+
+		stock_tendency_type_t  m_type;
+
+		dlist_t                m_list;
+	};
+
+	struct __stock_segment_t; typedef struct __stock_segment_t stock_segment_t;
+	struct __stock_segment_t
+	{
+		unsigned int           m_id;
+		stock_section_t *      m_start;
+		stock_section_t *      m_end;
+
+		stock_tendency_type_t  m_type;
+
+		dlist_t                m_list;
+	};
+
+	struct __stock_pivot_t; typedef struct __stock_pivot_t stock_pivot_t;
+	struct __stock_pivot_t
+	{
+		//stock_pivot_type_t   m_type;
+
+		stock_section_t    *   m_pstart;
+		stock_section_t    *   m_pend;
+
+		dlist_t                m_list;
+	};
+
+	struct __stock_trendency_t; typedef struct __stock_trendency_t stock_trendency_t;
+	struct __stock_trendency_t
+	{
+		stock_tendency_type_t  m_type;
+		stock_pivot_t *        m_tstart;
+		stock_pivot_t *        m_tend;
+
+		dlist_t                m_list;
+	};
+
+	struct __stock_chart_node_t; typedef struct __stock_chart_node_t stock_chart_node_t;
+	struct __stock_chart_node_t
+	{
+		void                 * m_reserved[2];
+		stock_candlesticks_node_type_t
+			m_node_type;
+
+		union
+		{
+			stock_candlesticks_node_t
+				m_candlesticks;
+			stock_section_t    m_section;
+			stock_segment_t    m_segment;
+			stock_pivot_t      m_pivot;
+			stock_trendency_t  m_trend;
+		} u;
+	};
+
+	enum __stock_candlesticks_pattern_type_t; typedef enum __stock_candlesticks_pattern_type_t stock_candlesticks_pattern_type_t;
+	enum __stock_candlesticks_pattern_type_t
+	{
+		STOCK_CANDLESTICKS_PATTERN_TYPE_INV = -1,	/* Invalid pattern */
+		STOCK_CANDLESTICKS_PATTERN_TYPE_TOP = 0,	/* top pattern     */
+		STOCK_CANDLESTICKS_PATTERN_TYPE_BOT = 1	/* bottom pattern  */
+	};
+
+	struct __stock_candlesticks_pattern_t; typedef struct __stock_candlesticks_pattern_t stock_candlesticks_pattern_t;
+	struct __stock_candlesticks_pattern_t
+	{
+		void                 * m_reserved[2];
+		stock_candlesticks_pattern_type_t
+			m_type;
+		stock_candlesticks_t * m_candlesticks;
+	};
+
+	struct __stock_chart_t; typedef struct __stock_chart_t stock_chart_t;
+	struct __stock_chart_t
+	{
+		stock_chart_period_type_t
+			m_period;
+
+		unsigned int		   m_data_len;
+		stock_chart_node_t   * m_node;
+		stock_candlesticks_t * m_candlesticks;
+
+		dlist_t                m_pattern_list;
+		dlist_t                m_csticks_list;
+	};
+
+	#pragma pack(pop)
+	/*
+	*  --------------------- Global variable definition ---------------------------
+	*/
+
+	/** ----------------------------------------------------------------------------
+	*  @Name:          Variable name
+	*
+	*  @Description:   Description of the variable.
+	* -----------------------------------------------------------------------------
+	*/
+	static unsigned int  cur_init = 0;
+
+	static stock_chart_t glb_stock_chart = {
+		STOCK_CHART_PERIOD_TYPE_MIN01,
+		0,
+		NULL,
+		NULL,
+	};
+
+	/*
+	*  --------------------- Local function forward declaration -------------------
+	*/
+
+	/** ============================================================================
+	*
+	*  @Function:      Local function forward declaration.
+	*
+	*  @Description:   // 函数功能、性能等的描述
+	*
+	*  @Calls:	        // 被本函数调用的函数清单
+	*
+	*  @Called By:	    // 调用本函数的函数清单
+	*
+	*  @Table Accessed:// 被访问的表（此项仅对于牵扯到数据库操作的程序）
+	*
+	*  @Table Updated: // 被修改的表（此项仅对于牵扯到数据库操作的程序）
+	*
+	*  @Input:	        // 对输入参数的说明
+	*
+	*  @Output:        // 对输出参数的说明
+	*
+	*  @Return:        // 函数返回值的说明
+	*
+	*  @Enter          // Precondition
+	*
+	*  @Leave          // Postcondition
+	*
+	*  @Others:        //其它说明
+	*
+	*  ============================================================================
+	*/
+	static int __stock_candlesticks_pattern_map_fxn(dlist_element_t * elem, void * data);
+
+	static int __stock_candlesticks_loop_map_fxn(dlist_element_t * elem, void * data);
+
+	/*
+	*  --------------------- Public function definition ---------------------------
+	*/
+
+	/** ============================================================================
+	*
+	*  @Function:      Public function definition.
+	*
+	*  @Description:   // 函数功能、性能等的描述
+	*
+	*  @Calls:	        // 被本函数调用的函数清单
+	*
+	*  @Called By:	    // 调用本函数的函数清单
+	*
+	*  @Table Accessed:// 被访问的表（此项仅对于牵扯到数据库操作的程序）
+	*
+	*  @Table Updated: // 被修改的表（此项仅对于牵扯到数据库操作的程序）
+	*
+	*  @Input:	        // 对输入参数的说明
+	*
+	*  @Output:        // 对输出参数的说明
+	*
+	*  @Return:        // 函数返回值的说明
+	*
+	*  @Enter          // Precondition
+	*
+	*  @Leave          // Postcondition
+	*
+	*  @Others:        // 其它说明
+	*
+	*  ============================================================================
+	*/
+	void chdl_fbfd(unsigned int data_len, float *pOut, float *pINa, float *pINb, float *pINc)
+	{
+		unsigned int           i;
+		unsigned int           cnt = 0;
+
+		stock_candlesticks_pattern_type_t
+			                   pattern_type;
+
+		stock_candlesticks_t * pbfe_sticks = NULL;
+		stock_candlesticks_t * plst_sticks = NULL;
+		stock_candlesticks_t * pcur_sticks = NULL;
+		stock_candlesticks_pattern_t
+			                * pfst_pattern = NULL;
+		stock_candlesticks_pattern_t
+			                * plst_pattern = NULL;
+
+		/*
+		*	Step0: Reset the output array.
+		*/
+		for (i = 0; i < data_len; i++) {
+			pOut[i] = 0.0;
+		}
+
+		dlist_init(&glb_stock_chart.m_pattern_list);
+		dlist_init(&glb_stock_chart.m_csticks_list);
+
+		/*
+		*	Step1: Allocate memory for candlesticks if neccessary.
+		*/
+		if (data_len > glb_stock_chart.m_data_len) {
+			if (glb_stock_chart.m_candlesticks != NULL) {
+				free(glb_stock_chart.m_candlesticks);
+				glb_stock_chart.m_candlesticks = NULL;
+			}
+
+			glb_stock_chart.m_data_len = data_len;
+			glb_stock_chart.m_candlesticks = calloc(glb_stock_chart.m_data_len, sizeof(stock_candlesticks_t));
+		}
+
+		for (i = 0; i < data_len; i++) {
+			pcur_sticks = &glb_stock_chart.m_candlesticks[i];
+
+			dlist_initialize_element((dlist_element_t *)pcur_sticks);
+
+			pcur_sticks->m_id = i;
+
+			pcur_sticks->m_high = pINa[i];
+			pcur_sticks->m_low = pINb[i];
+
+			//pfOut[i] = pfINa[i];
+			//pOut[i] = pcur_sticks->m_high;
+#if 0
+			dlist_last(&glb_stock_chart.m_csticks_list, (dlist_element_t **)&plst_sticks);
+
+
+			if (plst_sticks->m_high < pcur_sticks[i].m_high && plst_sticks->m_low > pcur_sticks[i].m_low) {
+				/* left-included */
+			}
+			if (plst_sticks->m_high > pcur_sticks[i].m_high && plst_sticks->m_low < pcur_sticks[i].m_low) {
+				/* right-included */
+			}
+#endif
+
+#if 1
+			dlist_count(&glb_stock_chart.m_csticks_list, &cnt);
+
+			if (cnt > 1) {
+				/*
+				*	There are at least two candlesticks on the candlesticks list,
+				*  we should update the pattern if neccessary.
+				*/
+				dlist_last(&glb_stock_chart.m_csticks_list, (dlist_element_t **)&plst_sticks);
+				dlist_prev(&glb_stock_chart.m_csticks_list, (dlist_element_t *)plst_sticks, (dlist_element_t **)&pbfe_sticks);
+
+				dlist_last(&glb_stock_chart.m_pattern_list, (dlist_element_t **)&plst_pattern);
+
+				/* Initialize the pattern type using default value: invalid pattern */
+				pattern_type = STOCK_CANDLESTICKS_PATTERN_TYPE_INV;
+
+				if (((plst_sticks->m_high > pbfe_sticks->m_high) && (plst_sticks->m_high > pcur_sticks->m_high)) &&
+					((plst_sticks->m_low  > pbfe_sticks->m_low) && (plst_sticks->m_low  > pcur_sticks->m_low))) {
+					/* top-pattern */
+					pattern_type = STOCK_CANDLESTICKS_PATTERN_TYPE_TOP;
+
+					if (plst_pattern->m_candlesticks->m_high < plst_sticks->m_high) {
+						/* Update the top-pattern */
+						plst_pattern->m_candlesticks = plst_sticks;
+					}
+				}
+				if (((plst_sticks->m_high < pbfe_sticks->m_high) && (plst_sticks->m_high < pcur_sticks->m_high)) &&
+					((plst_sticks->m_low  < pbfe_sticks->m_low) && (plst_sticks->m_low  < pcur_sticks->m_low))) {
+					/* bottom-pattern */
+					pattern_type = STOCK_CANDLESTICKS_PATTERN_TYPE_BOT;
+
+					if (plst_pattern->m_candlesticks->m_low > plst_sticks->m_low) {
+						/* Update the bottom-pattern */
+						plst_pattern->m_candlesticks = plst_sticks;
+					}
+				}
+
+				/* TODO: There is a bug here, fix it up tomorrow!!! */
+				if (plst_pattern != NULL && plst_pattern->m_type == pattern_type) {
+					if (STOCK_CANDLESTICKS_PATTERN_TYPE_TOP == pattern_type &&
+						(plst_pattern->m_candlesticks->m_high < plst_sticks->m_high)) {
+						/* Update the top-pattern */
+						plst_pattern->m_candlesticks = plst_sticks;
+					}
+
+					if (STOCK_CANDLESTICKS_PATTERN_TYPE_BOT == pattern_type &&
+						(plst_pattern->m_candlesticks->m_low > plst_sticks->m_low)) {
+						/* Update the bottom-pattern */
+						plst_pattern->m_candlesticks = plst_sticks;
+					}
+				}
+				else {
+					/*
+					*	Case1: plst_pattern == NULL.
+					*
+					*  Case2: plst_pattern->m_type != pattern_type.
+					*/
+
+					if (STOCK_CANDLESTICKS_PATTERN_TYPE_INV != pattern_type) {
+						/* This is a valid pattern */
+						stock_candlesticks_pattern_t * pcur_pattern = malloc(sizeof(stock_candlesticks_pattern_t));
+
+						pcur_pattern->m_type = pattern_type;
+						pcur_pattern->m_candlesticks = plst_sticks;
+
+						dlist_initialize_element((dlist_element_t *)pcur_pattern);
+						dlist_put_tail(&glb_stock_chart.m_pattern_list, (dlist_element_t *)pcur_pattern);
+					}
+				}
+			}
+
+			/*
+			*	Puts the latest candlestickes on the the end of of candlesticks list.
+			*/
+			dlist_initialize_element((dlist_element_t *)pcur_sticks);
+			dlist_put_tail(&glb_stock_chart.m_csticks_list, (dlist_element_t *)pcur_sticks);
+#endif
+
+			//dlist_put_tail(&glb_stock_chart.m_csticks_list, (dlist_element_t *)pcur_sticks);
+		}
+
+		/*
+		*	Step2: Map the pattern to output arrray.
+		*/
+#if 0
+		dlist_last(&glb_stock_chart.m_pattern_list, (dlist_element_t **)&plst_pattern);
+		dlist_last(&glb_stock_chart.m_csticks_list, (dlist_element_t **)&plst_sticks);
+
+		if (plst_pattern != NULL && plst_sticks != NULL) {
+			if (STOCK_CANDLESTICKS_PATTERN_TYPE_BOT == plst_pattern->m_type) {
+
+			}
+			else {
+
+			}
+		}
+#endif
+
+		dlist_map2(&glb_stock_chart.m_pattern_list, (DLIST_APPLY_FXN)__stock_candlesticks_pattern_map_fxn, (void *)pOut);
+		//dlist_map(&glb_stock_chart.m_csticks_list, (DLIST_APPLY_FXN)__stock_candlesticks_loop_map_fxn, (void *)pfOut);
+
+		//delete[] glb_stock_chart.m_candlesticks;
+	}
+
+	/*
+	*  --------------------- Local function definition ----------------------------
+	*/
+
+	/** ============================================================================
+	*
+	*  @Function:      Local function definition.
+	*
+	*  @Description:   //  函数功能、性能等的描述
+	*
+	*  ============================================================================
+	*/
+	static int __stock_candlesticks_pattern_map_fxn(dlist_element_t * elem, void * data)
+	{
+		float                        * pfOut = (float *)data;
+		stock_candlesticks_pattern_t * pattern = (stock_candlesticks_pattern_t *)elem;
+
+		if (STOCK_CANDLESTICKS_PATTERN_TYPE_TOP == pattern->m_type) {
+			pfOut[pattern->m_candlesticks->m_id] = 1.0;
+		}
+
+		if (STOCK_CANDLESTICKS_PATTERN_TYPE_BOT == pattern->m_type) {
+			pfOut[pattern->m_candlesticks->m_id] = -1.0;
+		}
+
+		free(pattern);
+
+		return 0;
+	}
+
+	static int __stock_candlesticks_loop_map_fxn(dlist_element_t * elem, void * data)
+	{
+		float                * pfOut = (float *)data;
+		stock_candlesticks_t * psticks = (stock_candlesticks_t *)elem;
+
+		pfOut[psticks->m_id] = psticks->m_high;
+
+		return 0;
+	}
+
+#if defined(__cplusplus)
+}
+#endif
